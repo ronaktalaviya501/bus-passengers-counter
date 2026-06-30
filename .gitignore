@@ -1,4 +1,15 @@
 uploads/
 outputs/
-
 __pycache__/
+
+# Ignore YOLO weights
+*.pt
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
