@@ -41,7 +41,7 @@ OUTPUT_DIR = "outputs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-model = YOLO("yolov8n.pt")
+model = YOLO("yolov8s.pt")
 
 # =========================
 # ENTRY MODEL CONFIG
@@ -193,23 +193,6 @@ def entry_stream(video_id: str, line_p1: tuple = (0, 310), line_p2: tuple = (640
 
     cap.release()
     out.release()
-
-@app.get("/preview/{video_id}")
-def get_preview_frame(video_id: str):
-    if video_id == "default":
-        in_path = "cam1.mp4"
-    else:
-        in_path = os.path.join(UPLOAD_DIR, f"{video_id}_entry.mp4")
-    
-    cap = cv2.VideoCapture(in_path)
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        return {"error": "Could not read video preview"}
-    
-    frame = cv2.resize(frame, RESIZE)
-    _, buf = cv2.imencode(".jpg", frame)
-    return StreamingResponse(io.BytesIO(buf.tobytes()), media_type="image/jpeg")
 
 @app.get("/entry-stream/{video_id}")
 def entry_video_stream(video_id: str, x1: int = 0, y1: int = 310, x2: int = 640, y2: int = 130):

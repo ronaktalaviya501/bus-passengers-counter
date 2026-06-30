@@ -12,15 +12,14 @@ document.addEventListener("DOMContentLoaded", () => {
         "entry-download-btn",
         "/upload-entry-video",
         "/entry-stream",
-        "/download-entry",
-        "/preview"
+        "/download-entry"
     );
 });
 
 function setupCounter(
     zoneId, inputId, nameId, progContainerId, progBarId, 
     videoContainerId, streamImgId, actionsId, processBtnId, downloadBtnId,
-    uploadUrl, streamUrl, downloadUrl, previewUrl
+    uploadUrl, streamUrl, downloadUrl
 ) {
     const zone = document.getElementById(zoneId);
     const input = document.getElementById(inputId);
@@ -38,32 +37,11 @@ function setupCounter(
     const resetLineBtn = document.getElementById("reset-line-btn");
 
     let selectedFile = null;
-    let videoId = "default"; // Start with default video on page load
+    let videoId = null;
     let isDrawing = false;
-    let hasDrawnLine = false;
 
     // Default coordinates in 640x360 space
     let customLine = { x1: 0, y1: 310, x2: 640, y2: 130 };
-
-    // Initialize with default video preview on load
-    loadPreview("default");
-
-    function loadPreview(vidId) {
-        videoId = vidId;
-        hasDrawnLine = false;
-        
-        // Show stream container and set preview frame
-        videoContainer.style.display = "flex";
-        streamImg.src = `${previewUrl}/${vidId}?t=${new Date().getTime()}`;
-        
-        // Prompt user to draw line
-        processBtn.disabled = true;
-        processBtn.textContent = "Draw Line First to Start";
-        processBtn.style.background = "linear-gradient(135deg, #4b5563, #374151)"; // Greyed out
-        
-        // Clear canvas and draw handles
-        setTimeout(resizeCanvas, 150);
-    }
 
     // Resize canvas to match display size of stream image
     function resizeCanvas() {
@@ -83,7 +61,7 @@ function setupCounter(
         const scaleX = canvas.width / 640;
         const scaleY = canvas.height / 360;
 
-        ctx.strokeStyle = hasDrawnLine ? "rgba(0, 255, 255, 0.9)" : "rgba(239, 68, 68, 0.4)"; // Cyan if drawn, faint Red if default
+        ctx.strokeStyle = "rgba(0, 255, 255, 0.75)";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(customLine.x1 * scaleX, customLine.y1 * scaleY);
@@ -91,7 +69,7 @@ function setupCounter(
         ctx.stroke();
 
         // Draw handles at endpoints
-        ctx.fillStyle = hasDrawnLine ? "cyan" : "red";
+        ctx.fillStyle = "cyan";
         ctx.beginPath();
         ctx.arc(customLine.x1 * scaleX, customLine.y1 * scaleY, 6, 0, Math.PI * 2);
         ctx.fill();
@@ -99,14 +77,6 @@ function setupCounter(
         ctx.beginPath();
         ctx.arc(customLine.x2 * scaleX, customLine.y2 * scaleY, 6, 0, Math.PI * 2);
         ctx.fill();
-
-        // Draw prompt overlay text if line is not drawn yet
-        if (!hasDrawnLine) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.95)";
-            ctx.font = "bold 14px Outfit, sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("⚠️ CLICK & DRAG TO DRAW CROSSING THRESHOLD LINE FIRST", canvas.width / 2, canvas.height / 2);
-        }
     }
 
     // Handle mouse events on canvas
@@ -119,7 +89,6 @@ function setupCounter(
         const y = (e.clientY - rect.top) * scaleY;
         
         isDrawing = true;
-        hasDrawnLine = true;
         customLine = { x1: x, y1: y, x2: x, y2: y };
         drawCustomLine();
     });
@@ -142,38 +111,24 @@ function setupCounter(
         if (!isDrawing) return;
         isDrawing = false;
         
-        // Enable Start Processing button since they've drawn a line
-        processBtn.disabled = false;
-        processBtn.textContent = "Start Processing";
-        processBtn.style.background = "linear-gradient(135deg, var(--accent-blue), #2563eb)";
+        // Restart the stream dynamically if already playing
+        if (videoId) {
+            updateStreamSrc();
+        }
     });
 
     resetLineBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         customLine = { x1: 0, y1: 310, x2: 640, y2: 130 };
-        hasDrawnLine = false;
         drawCustomLine();
-        
-        // Re-prompt to draw
-        processBtn.disabled = true;
-        processBtn.textContent = "Draw Line First to Start";
-        processBtn.style.background = "linear-gradient(135deg, #4b5563, #374151)";
-        
         if (videoId) {
-            // Revert image to preview
-            streamImg.src = `${previewUrl}/${videoId}?t=${new Date().getTime()}`;
-            downloadBtn.style.display = "none";
+            updateStreamSrc();
         }
     });
 
-    function startStream() {
+    function updateStreamSrc() {
         const queryParams = `x1=${Math.round(customLine.x1)}&y1=${Math.round(customLine.y1)}&x2=${Math.round(customLine.x2)}&y2=${Math.round(customLine.y2)}`;
         streamImg.src = `${streamUrl}/${videoId}?${queryParams}&t=${new Date().getTime()}`;
-        
-        processBtn.textContent = "Processing Live Stream...";
-        processBtn.disabled = true;
-        downloadBtn.href = `${downloadUrl}/${videoId}`;
-        downloadBtn.style.display = "inline-block";
     }
 
     // Handle clicks to trigger input
@@ -206,17 +161,33 @@ function setupCounter(
     function handleFileSelect(file) {
         selectedFile = file;
         nameEl.textContent = `Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        actions.style.display = "flex";
         downloadBtn.style.display = "none";
-        
-        // Trigger upload immediately to get the video ID and load preview
-        uploadFile();
+        videoContainer.style.display = "none";
+        streamImg.src = "";
     }
 
-    function uploadFile() {
+    processBtn.addEventListener("click", () => {
+        if (!selectedFile) {
+            videoId = "default";
+            processBtn.textContent = "Processing Stream...";
+            
+            // Show stream
+            videoContainer.style.display = "flex";
+            setTimeout(resizeCanvas, 100); // Allow display layout to stabilize
+            updateStreamSrc();
+
+            // Set download link
+            downloadBtn.href = `${downloadUrl}/${videoId}`;
+            downloadBtn.style.display = "inline-block";
+            return;
+        }
+
+        // Reset progress
         progContainer.style.display = "block";
         progBar.style.width = "0%";
         processBtn.disabled = true;
-        processBtn.textContent = "Uploading video...";
+        processBtn.textContent = "Uploading...";
 
         const formData = new FormData();
         formData.append("file", selectedFile);
@@ -224,6 +195,7 @@ function setupCounter(
         const xhr = new XMLHttpRequest();
         xhr.open("POST", uploadUrl, true);
 
+        // Track upload progress
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
                 const percent = (e.loaded / e.total) * 100;
@@ -234,10 +206,20 @@ function setupCounter(
         xhr.onload = () => {
             if (xhr.status === 200) {
                 const response = JSON.parse(xhr.responseText);
-                progContainer.style.display = "none";
+                videoId = response.video_id;
+
+                processBtn.textContent = "Processing Stream...";
                 
-                // Load preview of the uploaded video
-                loadPreview(response.video_id);
+                // Show stream
+                videoContainer.style.display = "flex";
+                setTimeout(resizeCanvas, 100);
+                updateStreamSrc();
+
+                // Set download link
+                downloadBtn.href = `${downloadUrl}/${videoId}`;
+                downloadBtn.style.display = "inline-block";
+                
+                progContainer.style.display = "none";
             } else {
                 alert("Upload failed. Please try again.");
                 resetUI();
@@ -250,12 +232,6 @@ function setupCounter(
         };
 
         xhr.send(formData);
-    }
-
-    processBtn.addEventListener("click", () => {
-        if (hasDrawnLine) {
-            startStream();
-        }
     });
 
     function resetUI() {
