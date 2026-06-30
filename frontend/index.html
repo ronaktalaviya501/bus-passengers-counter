@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaBus Passengers Counter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">🚌</span>
+                <h1>InstaBus <span>Passengers Counter</span></h1>
+            </div>
+            <p class="subtitle">AI-powered crowd tracking and passenger analytics for transit systems.</p>
+        </header>
+
+        <main class="grid-container">
+
+
+            <!-- Right Side: Entry Counter -->
+            <section class="card entry-card">
+                <div class="card-header">
+                    <h2>🚪 Doorways Entry Counter</h2>
+                    <p>Count passengers entering/crossing the threshold boundary line.</p>
+                </div>
+
+                <div class="upload-zone" id="entry-upload-zone">
+                    <div class="upload-icon">📤</div>
+                    <p class="upload-text">Drag & drop door video here or <span class="highlight">browse</span></p>
+                    <input type="file" id="entry-file-input" accept="video/*" hidden>
+                    <p class="file-name" id="entry-file-name">Default: cam1.mp4 (Using by default)</p>
+                </div>
+
+                <div class="progress-bar-container" id="entry-progress-container">
+                    <div class="progress-bar" id="entry-progress"></div>
+                </div>
+
+                <div class="video-container" id="entry-video-container" style="display: none;">
+                    <h3>Real-time Stream <span style="font-size: 0.8rem; text-transform: none; color: var(--accent-cyan); float: right; cursor: pointer;" id="reset-line-btn">🔄 Reset Custom Line</span></h3>
+                    <p style="font-size: 0.8rem; padding: 0.5rem 1rem; background: #161a2b; color: var(--text-secondary); margin: 0; border-bottom: 1px solid var(--border-color);">
+                        💡 <strong>Tip:</strong> Click and drag on the video to draw a custom threshold line!
+                    </p>
+                    <div style="position: relative; width: 100%; height: 100%;">
+                        <img id="entry-stream-img" src="" alt="Entry stream output" class="stream-viewer" style="display: block; width: 100%;">
+                        <canvas id="line-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair;"></canvas>
+                    </div>
+                </div>
+
+                <div class="action-bar" id="entry-actions">
+                    <button class="btn btn-primary" id="entry-process-btn">Start Processing</button>
+                    <a href="#" class="btn btn-secondary" id="entry-download-btn" style="display: none;" download>Download Result</a>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
