@@ -41,7 +41,7 @@ OUTPUT_DIR = "outputs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-model = YOLO("yolov8s.pt")
+model = YOLO("yolov8n.pt")
 
 # =========================
 # ENTRY MODEL CONFIG
